@@ -1,19 +1,40 @@
-name: 01-trigger-azure-cast-scan-pipeline
+name: trigger-az-cast-scan-pipeline
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
+  getCommitSHA:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Setup Environment (PR)  
+          if: ${{ github.event_name == 'pull_request' }}  
+          shell: bash  
+          run: |  
+            echo "LAST_COMMIT_SHA=${{ github.event.pull_request.head.sha }}" >> ${GITHUB_ENV} 
+            echo "${{ github.event.pull_request.head.sha }}"
+        - name: Setup Environment (Push)  
+          if: ${{ github.event_name == 'push' }}  
+          shell: bash  
+          run: |  
+            echo "LAST_COMMIT_SHA=${GITHUB_SHA}" >> ${GITHUB_ENV}
   CastScanning:
-     #runs-on: ubuntu-latest
-     runs-on: self-hosted
+     runs-on: ubuntu-latest
+     #runs-on: self-hosted-AzureVM001
+     env:
+       job_var1: "value1"
+       LAST_COMMIT_SHA: ${GITHUB_ENV}
      steps:
         - name: Azure pipelines actions
-          uses: Azure/pipelines@v1
+          uses: Azure/pipelines@v1.2
           with: 
            azure-devops-project-url: 'https://dev.azure.com/rvmado/NVS_EH'
-           azure-pipeline-name: 'azure-pipelines-action'
+           azure-pipeline-name: 'cast-starter-pipeline-gh-runner-01'
            azure-devops-token: '${{ secrets.AZURE_DEVOPS_TOKEN }}'
+           azure-pipeline-variables: '{${{ env.variable1 }}:"DL"}'
+           ##azure-pipeline-variables:  '${{ env.job_var1 }}'
+           ##azure-pipeline-variables:  '${{ env.variable1 }}' ## This defined in settings
+           ##'{"variable1": "Value1"}' # optional stringified json
